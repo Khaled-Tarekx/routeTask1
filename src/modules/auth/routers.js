@@ -1,8 +1,26 @@
-import express from "express"
-const router = express.Router()
-import { register, login } from "./controllers.js"
+import express from 'express';
+const router = express.Router();
+import {register, login, forgetPassword} from './controllers.js';
+import {checkEmailAndHash, validateResource} from './middlewares.js';
+import {
+	registerValidation,
+	forgetPasswordValidation,
+	loginValidation,
+} from './validation.js';
 
-router.post('/register/', register)
-router.post('/login/', login)
+router.post(
+	'/register/',
+	checkEmailAndHash,
+	validateResource(registerValidation),
+	register
+);
 
-export default router
+router.post('/login/', validateResource(loginValidation), login);
+
+router.post(
+	'/forget-password/',
+	validateResource(forgetPasswordValidation),
+	forgetPassword
+);
+
+export default router;

@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>JSDoc: Source: controllers.js</title>
+
+    <script src="scripts/prettify/prettify.js"> </script>
+    <script src="scripts/prettify/lang-css.js"> </script>
+    <!--[if lt IE 9]>
+      <script src="//html5shiv.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+    <link type="text/css" rel="stylesheet" href="styles/prettify-tomorrow.css">
+    <link type="text/css" rel="stylesheet" href="styles/jsdoc-default.css">
+</head>
+
+<body>
+
+<div id="main">
+
+    <h1 class="page-title">Source: controllers.js</h1>
+
+    
+
+
+
+    
+    <section>
+        <article>
+            <pre class="prettyprint source linenums"><code>import {compare} from 'bcrypt';
+import jwt from 'jsonwebtoken';
+import User from '../users/models.js';
+import {validateOTP, hashPassword} from './helpers.js';
+import asyncHandler from 'express-async-handler';
+
+/**
+ * Registers a new user with the provided details.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} req.body - The body of the request containing user details.
+ * @param {string} req.body.firstName - The first name of the user.
+ * @param {string} req.body.lastName - The last name of the user.
+ * @param {string} req.body.email - The email address of the user.
+ * @param {string} req.body.password - The password for the user account.
+ * @param {Array&lt;string>} req.body.roles - The roles assigned to the user.
+ * @param {string} req.body.recoveryEmail - The recovery email address for the user.
+ * @param {string} req.body.dateOfBirth - The date of birth of the user.
+ * @param {string} req.body.mobileNumber - The mobile number of the user.
+ * @param {Object} res - The response object.
+ * @returns {Promise&lt;void>} - A promise that resolves when the user is created.
+ */
+export const register = asyncHandler(async (req, res) => {
+	try {
+		const {
+			firstName,
+			lastName,
+			email,
+			password,
+			roles,
+			recoveryEmail,
+			dateOfBirth,
+			mobileNumber,
+		} = req.body;
+		const user = await User.create({
+			firstName,
+			lastName,
+			email,
+			password,
+			roles,
+			recoveryEmail,
+			dateOfBirth,
+			mobileNumber,
+		});
+		res.status(201).json({message: `user created successfully`, user});
+	} catch (err) {
+		res.status(500).json({message: `error signing-up ${err}`});
+	}
+});
+
+/**
+ * Handles user login by verifying credentials and generating a JWT token.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} req.body - The body of the request.
+ * @param {string} req.body.email - The email of the user.
+ * @param {string} req.body.mobileNumber - The mobile number of the user.
+ * @param {string} req.body.recoveryEmail - The recovery email of the user.
+ * @param {string} req.body.password - The password of the user.
+ * @param {Object} res - The response object.
+ * @returns {Promise&lt;void>} - Returns a promise that resolves to void.
+ */
+export const login = asyncHandler(async (req, res) => {
+	try {
+		const {email, mobileNumber, recoveryEmail, password} = req.body;
+		let correctUser;
+
+		if (email) {
+			correctUser = await User.findOne({email: email});
+		}
+
+		if (mobileNumber) {
+			correctUser = await User.findOne({
+				mobileNumber: mobileNumber,
+			});
+		}
+		if (recoveryEmail) {
+			correctUser = await User.findOne({
+				recoveryEmail: recoveryEmail,
+			});
+		}
+		if (!correctUser || !compare(password, correctUser.password)) {
+			return res
+				.status(400)
+				.json({message: `email or password is incorrect`});
+		}
+		const token = jwt.sign(
+			{id: correctUser.id, roles: correctUser.roles},
+			process.env.SECRET_KEY
+		);
+		correctUser.status = 'online';
+		correctUser.save();
+		res.status(201).json({message: `user logged in  successfully`, token});
+	} catch (err) {
+		res.status(500).json({message: `error logging in ${err}`});
+	}
+});
+
+/**
+ * Handles the forget password functionality.
+ *
+ * @param {Object} req - The request object.
+ * @param {Object} req.body - The body of the request.
+ * @param {string} req.body.password - The new password.
+ * @param {string} req.body.confirmPassword - The confirmation of the new password.
+ * @param {string} req.body.otpCode - The OTP code for validation.
+ * @param {string} req.body.email - The email of the user.
+ * @param {Object} res - The response object.
+ *
+ * @returns {Promise&lt;void>} - A promise that resolves to void.
+ */
+export const forgetPassword = asyncHandler(async (req, res) => {
+	const {password, confirmPassword, otpCode, email} = req.body;
+	try {
+		const user = await User.findOne({email});
+		const isValid = await validateOTP(user.id, otpCode);
+		if (!isValid) {
+			return res.status(201).json('your otp is not correct');
+		}
+		if (!password === confirmPassword) {
+			return res
+				.status(201)
+				.json('password and confirm password should match');
+		}
+		const hashedPassword = await hashPassword(password);
+		const updatedUser = await User.findByIdAndUpdate(
+			id,
+			{hashedPassword},
+			{new: true}
+		);
+		res.status(201).json({
+			message: `new user password has been set successfully`,
+			updatedUser,
+		});
+	} catch (err) {
+		res.status(500).json({message: `error signing-up ${err}`});
+	}
+});
+</code></pre>
+        </article>
+    </section>
+
+
+
+
+</div>
+
+<nav>
+    <h2><a href="index.html">Home</a></h2><h3>Global</h3><ul><li><a href="global.html#forgetPassword">forgetPassword</a></li><li><a href="global.html#login">login</a></li><li><a href="global.html#register">register</a></li></ul>
+</nav>
+
+<br class="clear">
+
+<footer>
+    Documentation generated by <a href="https://github.com/jsdoc/jsdoc">JSDoc 4.0.3</a> on Mon Aug 12 2024 11:35:26 GMT+0300 (Eastern European Summer Time)
+</footer>
+
+<script> prettyPrint(); </script>
+<script src="scripts/linenumber.js"> </script>
+</body>
+</html>

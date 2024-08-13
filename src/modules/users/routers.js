@@ -1,10 +1,43 @@
-import express from 'express'
+import express from 'express';
+import {validateResource} from '../auth/middlewares.js';
+const router = express.Router();
+import {
+	getUserByID,
+	getUsers,
+	updateUser,
+	deleteUser,
+	getUserByRecoveryEmail,
+	getMyUser,
+	updatePassword,
+	generateOtp,
+} from './controllers.js';
+import {
+	recoveryEmailValidation,
+	updatePasswordValidation,
+	updateUserValidation,
+} from './validation.js';
 
-const router = express.Router()
-import { getUserByID, getUsers, createUser, updateUser, deleteUser } from './controllers.js'
+router.route('/').get(getUsers);
+router.get('/me', getMyUser);
+router.get(
+	'/recovery-email',
+	validateResource(recoveryEmailValidation),
+	getUserByRecoveryEmail
+);
+router.patch(
+	'/update-user',
+	validateResource(updateUserValidation),
+	updateUser
+);
 
-router.route('/').get(getUsers).post(createUser)
+router.patch(
+	'/update-password',
+	validateResource(updatePasswordValidation),
+	updatePassword
+);
+router.post('/generate-otp', generateOtp);
+router.delete('/delete-user', deleteUser);
 
-router.route('/:id').get(getUserByID).delete(deleteUser).patch(updateUser)
+router.get('/:id', getUserByID);
 
-export default router
+export default router;
