@@ -6,7 +6,7 @@ const applicationSchema = new Schema(
 		userId: {type: Types.ObjectId, ref: 'user', required: true},
 		userTechSkills: [{type: String, required: true}],
 		userSoftSkills: [{type: String, required: true}],
-		userResume: {type: String, required: true}, // TODO: ( must be pdf , upload this pdf on cloudinary )
+		userResume: {type: String, required: true},
 	},
 	{timestamps: true}
 );

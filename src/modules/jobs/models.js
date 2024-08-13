@@ -31,14 +31,12 @@ const jobSchema = new Schema({
 		{
 			type: String,
 			required: true,
-			comment: '( array of skills, like  nodejs  , typescript ,…)',
 		},
 	],
 	softSkills: [
 		{
 			type: String,
 			required: true,
-			comment: ' (array of Skills , like time management , team worker,.. )',
 		},
 	],
 	addedBy: {type: Types.ObjectId, ref: 'user', required: true},

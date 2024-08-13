@@ -50,7 +50,6 @@ const userSchema = new Schema(
 	{timestamps: true}
 );
 
-//TODO: needs to be more cascading  companies
 userSchema.pre('remove', async function (next) {
 	const userId = this._id;
 	try {
