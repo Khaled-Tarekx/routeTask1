@@ -1,9 +1,11 @@
-import asyncHandler from 'express-async-handler';
-import User from '../users/models.js';
-import {hash, genSalt} from 'bcrypt';
-
+import User from '../../../database/user.model.js';
+import { hash, genSalt } from 'bcrypt';
+import Forbidden from '../../custom-errors/forbidden.js';
+import { NotFound } from '../../custom-errors/main.js';
 export const isResourceOwner = async (userId, resourceOwnerId) => {
-	return userId === resourceOwnerId;
+	if (userId !== resourceOwnerId) {
+		throw new Forbidden('you are not the resource owner');
+	}
 };
 
 export const generateOTP = async () =>
@@ -41,17 +43,10 @@ export const hashPassword = async (password) => {
 	}
 };
 
-export const findUserByEmailAndNumber = async (body) => {
-	let correctUser = null;
-
-	if (body.email) {
-		correctUser = await User.findOne({email: body.email});
-	}
-
-	if (!correctUser && body.mobileNumber) {
-		correctUser = await User.findOne({
-			mobileNumber: body.mobileNumber,
-		});
+export const findUserByEmail = async (email) => {
+	const correctUser = await User.findOne({ email });
+	if (!correctUser) {
+		throw new NotFound('user not found');
 	}
 	return correctUser;
 };
